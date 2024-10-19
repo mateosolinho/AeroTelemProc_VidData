@@ -7,6 +7,61 @@ from collections import deque
 import csv
 from openpyxl import Workbook
 
+def detectar_angulo_nave(frame, angulos_buffer):
+    # Definir las coordenadas de la ROI (ajústalas según tus necesidades)
+    x1, y1, x2, y2 = 1170, 900, 1320, 1080  # Ejemplo de coordenadas para una ROI específica de Starship
+    roi = frame[y1:y2, x1:x2]
+
+    # Suavizar la imagen para reducir el ruido
+    gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+
+    # Detectar bordes con Canny
+    canny = cv2.Canny(blurred, 50, 150, apertureSize=3)
+
+    # Detección de líneas con HoughLines
+    lines = cv2.HoughLines(canny, 1, np.pi / 180, 60, np.array([]))
+
+    if lines is not None:
+        angles = []
+        for rho, theta in lines[:, 0]:
+            # Convertir de coordenadas polares a cartesianas para la línea
+            a = np.cos(theta)
+            b = np.sin(theta)
+            x0 = a * rho
+            y0 = b * rho
+            x1_line = int(x0 + 1000 * (-b))
+            y1_line = int(y0 + 1000 * (a))
+            x2_line = int(x0 - 1000 * (-b))
+            y2_line = int(y0 - 1000 * (a))
+
+            # Calcular el ángulo en grados
+            angle = np.degrees(np.arctan2((y2_line - y1_line), (x2_line - x1_line)))
+            angles.append(angle)
+
+            # Dibujar la línea en la ROI para visualización
+            cv2.line(roi, (x1_line, y1_line), (x2_line, y2_line), (0, 0, 255), 2)
+
+        # Promediar los ángulos detectados
+        angle_mean = np.mean(angles)
+
+        # Agregar el ángulo detectado al buffer
+        angulos_buffer.append(angle_mean)
+
+        # Calcular el promedio móvil de los últimos ángulos
+        if len(angulos_buffer) >= 5:
+            smooth_angle = np.mean(angulos_buffer)
+        else:
+            smooth_angle = angle_mean
+
+        # Umbral para ignorar variaciones menores
+        if abs(smooth_angle - angulos_buffer[-1]) < 2:  # Umbral de 2 grados
+            smooth_angle = angulos_buffer[-1]
+
+        return smooth_angle, roi
+    else:
+        return None, roi
+
 def time_to_ms(time_text):
     parts = time_text.split(':')
     if len(parts) == 2 and all(part.isdigit() for part in parts):
@@ -138,7 +193,7 @@ def read_speed_and_altitude_from_video(video_path, profile, initTime, finishTime
                 print("La región de velocidad excede el tamaño del cuadro.")
                 continue  # O realiza algún otro manejo de errores aquí
 
-            if frame_counter % 10 == 0:
+            if frame_counter % 5 == 0:
                 # Extrae las regiones donde se encuentran SPEED, ALTITUDE, y el contador de tiempo
                 speed_region = frame[rect_start_y:rect_start_y + rect_height, rect_start_x:rect_start_x + rect_width]
                 altitude_region = frame[altitude_rect_start_y:altitude_rect_start_y + rect_height, altitude_rect_start_x:altitude_rect_start_x + rect_width]
@@ -169,7 +224,7 @@ def read_speed_and_altitude_from_video(video_path, profile, initTime, finishTime
                 altitude_numbers = re.findall(r'\d+\.?\d*', altitude_text.replace('"', '').replace("'", '').strip())
                 time_text = re.sub(r'[^0-9:]', '', time_text)
 
-                print(f"Texto detectado en la región de tiempo: {time_text.strip()}")
+                # print(f"Texto detectado en la región de tiempo: {time_text.strip()}")
 
                 # Obtener valores detectados
                 if speed_numbers:
@@ -177,6 +232,13 @@ def read_speed_and_altitude_from_video(video_path, profile, initTime, finishTime
                     speed_buffer.append(speed_value)  # Añadir al buffer
                 else:
                     speed_value = "No speed detected"
+                    
+                angle, roi_with_lines = detectar_angulo_nave(frame, deque(maxlen=5))
+                if angle is not None:    
+                    print(f"Ángulo de la nave detectado: {angle:.2f} grados")
+                else:
+                    print(f"Ángulo de la nave no detectado")
+                    
 
                 if altitude_numbers:
                     last_altitude_value = float(altitude_numbers[0])  # Convertir a float
@@ -212,5 +274,5 @@ def read_speed_and_altitude_from_video(video_path, profile, initTime, finishTime
     workbook.save('telemetry_data.xlsx')
 
 # Uso del programa
-video_path = 'C:/Users/mateo/Desktop/python/projects/rocket_telemetry/s.mp4'
-read_speed_and_altitude_from_video(video_path, "Falcon9", "07:03", "00:08:18")
+video_path = 'C:/Users/mateo/Desktop/AeroTelemProc_VidData/ift5.mp4'
+read_speed_and_altitude_from_video(video_path, "StarShip", "25:15", "01:05:50")
