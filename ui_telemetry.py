@@ -23,7 +23,7 @@ class TelemetryApp:
         self.video_path = ""
         self.canvas = None
         self.frame_label = None
-        self.cap = None  # Para manejar la captura del video
+        self.cap = None
         self.frame_counter = 0
         self.speed_buffer = deque(maxlen=5)
         self.altitude_buffer = deque(maxlen=5)
@@ -60,7 +60,7 @@ class TelemetryApp:
         telemetry_frame.grid(row=1, column=1, padx=10, pady=10)
 
         # Establecer un ancho fijo para las etiquetas
-        label_width = 20  # Ajusta este valor según sea necesario
+        label_width = 20
 
         # Etiquetas para mostrar la telemetría (Velocidad, Altitud, Tiempo)
         self.speed_label = tk.Label(telemetry_frame, text="Velocidad: ---", font=("Helvetica", 16), width=label_width, anchor='w')
@@ -138,8 +138,8 @@ class TelemetryApp:
 
         # Usar OpenCV para obtener la duración
         cap = cv2.VideoCapture(video_path)
-        fps = cap.get(cv2.CAP_PROP_FPS)  # Frames por segundo
-        frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT)  # Número total de frames
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT)
         duration = frame_count / fps 
         print(file_name)
         print(file_size)

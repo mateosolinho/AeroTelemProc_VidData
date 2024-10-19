@@ -43,8 +43,8 @@ def read_speed_and_altitude_from_video(video_path, profile, init, finalTime=-1):
     
     cap.set(cv2.CAP_PROP_POS_MSEC, time_to_ms(init))
     
-    fps = cap.get(cv2.CAP_PROP_FPS)  # Obtener el FPS del video
-    wait_time = int(1000 / fps)  # Calcular el tiempo de espera entre frames en milisegundos
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    wait_time = int(1000 / fps)
 
     
     profiles = {
@@ -158,7 +158,7 @@ def read_speed_and_altitude_from_video(video_path, profile, init, finalTime=-1):
                     last_speed_value = int(speed_numbers[0])
 
                 if altitude_numbers:
-                    last_altitude_value = float(altitude_numbers[0])  # Convertir a float
+                    last_altitude_value = float(altitude_numbers[0])
                     altitude_buffer.append(last_altitude_value)
                     
                 last_time_text = time_text if time_text else last_time_text
