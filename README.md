@@ -22,11 +22,12 @@ Imagina poder extraer datos de velocidad y otras métricas directamente de un vi
 
 ### Requisitos
 
-- Python 3.x
+- Python 3.12.5
 - Dependencias:
   - OpenCV
   - Pytesseract
   - NumPy
+  - Openpyxl
 
 ### Instalación
 
