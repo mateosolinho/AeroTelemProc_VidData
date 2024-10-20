@@ -1,0 +1,5 @@
+opencv-python
+pytesseract
+numpy
+concurrent-log-handler
+openpyxl
