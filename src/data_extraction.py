@@ -4,7 +4,9 @@ import csv
 from openpyxl import Workbook
 from collections import deque
 from src.angle_detection import detectar_angulo_nave
-from src.utils import cleanup, extract_text, time_to_ms, time_to_seconds, moving_average
+from src.engine_detection import analizar_motores
+from src.propelent_detection import PropellantAnalyzer
+from src.utils import cleanup, extract_text, time_to_ms
 import re
 
 def read_speed_and_altitude_from_video(video_path, profile, initTime, finishTime):
@@ -21,7 +23,9 @@ def read_speed_and_altitude_from_video(video_path, profile, initTime, finishTime
             'time_rect_start_x': 905,
             'time_rect_start_y': 950,
             'time_rect_width': 155,
-            'time_rect_height': 45
+            'time_rect_height': 45,
+            "line_coordinates_lox": (270, 1042, 500, 1042),
+            "line_coordinates_ch4": (270, 1006, 500, 1006)
         },
         'StarShip': {
             'rect_start_x': int(0.8 * 1750),
@@ -31,7 +35,9 @@ def read_speed_and_altitude_from_video(video_path, profile, initTime, finishTime
             'time_rect_start_x': 905,
             'time_rect_start_y': 950,
             'time_rect_width': 155,
-            'time_rect_height': 45
+            'time_rect_height': 45,
+            "line_coordinates_lox": (1460, 1040, 1690, 1040),
+            "line_coordinates_ch4": (1460, 1050, 1690, 1050)
         },
         'Falcon9': {
             'rect_start_x': int(0.8 * 145),
@@ -51,6 +57,7 @@ def read_speed_and_altitude_from_video(video_path, profile, initTime, finishTime
         raise ValueError("Perfil no válido. Escoge entre: SuperHeavy, StarShip, Falcon9")
     
     current_profile = profiles[profile]
+    print(current_profile['line_coordinates_lox'])
     
     rect_start_x = current_profile['rect_start_x']
     rect_start_y = current_profile['rect_start_y']
@@ -60,6 +67,8 @@ def read_speed_and_altitude_from_video(video_path, profile, initTime, finishTime
     time_rect_start_y = current_profile['time_rect_start_y']
     time_rect_width = current_profile['time_rect_width']
     time_rect_height = current_profile['time_rect_height']
+    line_coordinates_lox = current_profile['line_coordinates_lox']
+    line_coordinates_ch4 = current_profile['line_coordinates_ch4']
 
     # Coordenadas de altitud separadas si es Falcon 9
     if profile == 'Falcon9':
@@ -74,16 +83,17 @@ def read_speed_and_altitude_from_video(video_path, profile, initTime, finishTime
 
     frame_counter = 0  # Contador de fotogramas
 
+    analyzer = PropellantAnalyzer()
 
     # Crear un archivo CSV para almacenar los datos
     with open('C:/Users/mateo/Desktop/AeroTelemProc_VidData/data/telemetry_data.csv', mode='w', newline='') as csvfile:
         csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(['Time', 'Speed', 'Altitude'])
+        csv_writer.writerow(['Time', 'Speed', 'Altitude', 'Angle', 'SuperHeavy_Engines', 'Starship_Engines', 'LOX', 'CH4'])
 
         # Crear un archivo .xlsx para almacenar los datos
         workbook = Workbook()
         sheet = workbook.active
-        sheet.append(['Time (seconds)', 'Speed', 'Altitude'])
+        sheet.append(['Time', 'Speed', 'Altitude', 'Angle', 'SuperHeavy_Engines', 'Starship_Engines', 'LOX', 'CH4'])
 
         while cap.isOpened():
             ret, frame = cap.read()
@@ -96,16 +106,17 @@ def read_speed_and_altitude_from_video(video_path, profile, initTime, finishTime
                 print("La región de velocidad excede el tamaño del cuadro.")
                 continue  # O realiza algún otro manejo de errores aquí
 
-            if frame_counter % 5 == 0:
-                # Extrae las regiones donde se encuentran SPEED, ALTITUDE, y el contador de tiempo
-                speed_region = frame[rect_start_y:rect_start_y + rect_height, rect_start_x:rect_start_x + rect_width]
-                altitude_region = frame[altitude_rect_start_y:altitude_rect_start_y + rect_height, altitude_rect_start_x:altitude_rect_start_x + rect_width]
-                time_region = frame[time_rect_start_y:time_rect_start_y + time_rect_height, time_rect_start_x:time_rect_start_x + time_rect_width]
+            # Extrae las regiones donde se encuentran SPEED, ALTITUDE, y el contador de tiempo
+            speed_region = frame[rect_start_y:rect_start_y + rect_height, rect_start_x:rect_start_x + rect_width]
+            altitude_region = frame[altitude_rect_start_y:altitude_rect_start_y + rect_height, altitude_rect_start_x:altitude_rect_start_x + rect_width]
+            time_region = frame[time_rect_start_y:time_rect_start_y + time_rect_height, time_rect_start_x:time_rect_start_x + time_rect_width]
 
-                # Dibuja rectángulos sobre las regiones de interés
-                cv2.rectangle(frame, (rect_start_x, rect_start_y), (rect_start_x + rect_width, rect_start_y + rect_height), (0, 255, 0), 2)
-                cv2.rectangle(frame, (altitude_rect_start_x, altitude_rect_start_y), (altitude_rect_start_x + rect_width, altitude_rect_start_y + rect_height), (255, 0, 0), 2)
-                cv2.rectangle(frame, (time_rect_start_x, time_rect_start_y), (time_rect_start_x + time_rect_width, time_rect_start_y + time_rect_height), (0, 0, 255), 2)
+            # Dibuja rectángulos sobre las regiones de interés
+            cv2.rectangle(frame, (rect_start_x, rect_start_y), (rect_start_x + rect_width, rect_start_y + rect_height), (0, 255, 0), 2)
+            cv2.rectangle(frame, (altitude_rect_start_x, altitude_rect_start_y), (altitude_rect_start_x + rect_width, altitude_rect_start_y + rect_height), (255, 0, 0), 2)
+            cv2.rectangle(frame, (time_rect_start_x, time_rect_start_y), (time_rect_start_x + time_rect_width, time_rect_start_y + time_rect_height), (0, 0, 255), 2)
+                        
+            if frame_counter % 5 == 0:
 
                 # Limpia las imágenes antes de extraer texto
                 cleaned_speed_region = cleanup(speed_region)
@@ -126,8 +137,15 @@ def read_speed_and_altitude_from_video(video_path, profile, initTime, finishTime
                 speed_numbers = re.findall(r'\d+', speed_text.replace('"', '').replace("'", '').strip())
                 altitude_numbers = re.findall(r'\d+\.?\d*', altitude_text.replace('"', '').replace("'", '').strip())
                 time_text = re.sub(r'[^0-9:]', '', time_text)
-
-                # print(f"Texto detectado en la región de tiempo: {time_text.strip()}")
+                
+                if ret:
+                    fuel_data_lox = analyzer.analyze_propellant_bar(frame, line_coordinates_lox)
+                    
+                    print("LOX:",fuel_data_lox)
+                        
+                    fuel_data_ch4 = analyzer.analyze_propellant_bar(frame, line_coordinates_ch4)
+                    
+                    print("CH4:",fuel_data_ch4)
 
                 # Obtener valores detectados
                 if speed_numbers:
@@ -137,11 +155,12 @@ def read_speed_and_altitude_from_video(video_path, profile, initTime, finishTime
                     speed_value = "No speed detected"
                     
                 angle, roi_with_lines = detectar_angulo_nave(frame, deque(maxlen=5))
-                if angle is not None:    
-                    print(f"Ángulo de la nave detectado: {angle:.2f} grados")
-                else:
-                    print(f"Ángulo de la nave no detectado")
+                if angle is None:    
+                    angle = "No angle detected"
                     
+                resultados = analizar_motores(frame)
+                Starship_engine = resultados['starship']
+                SuperHeavy_engine = resultados['booster']
 
                 if altitude_numbers:
                     last_altitude_value = float(altitude_numbers[0])  # Convertir a float
@@ -150,10 +169,12 @@ def read_speed_and_altitude_from_video(video_path, profile, initTime, finishTime
                     last_altitude_value = "No altitude detected"
                 
                 # Guardar los datos en el CSV y en el archivo Excel
-                csv_writer.writerow([time_text, speed_value, last_altitude_value])
-                sheet.append([time_text, speed_value, last_altitude_value])
+                csv_writer.writerow([time_text, speed_value, last_altitude_value, angle, SuperHeavy_engine, Starship_engine, fuel_data_lox, fuel_data_ch4])
+                sheet.append([time_text, speed_value, last_altitude_value, angle, SuperHeavy_engine, Starship_engine, fuel_data_lox, fuel_data_ch4])
 
                 # Muestra los valores detectados en el frame original
+                cv2.putText(frame, f"LOX", (line_coordinates_lox[0], line_coordinates_lox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+                cv2.putText(frame, f"CH4", (line_coordinates_ch4[0], line_coordinates_ch4[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
                 cv2.putText(frame, f"Speed: {speed_value}", (rect_start_x, rect_start_y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
                 cv2.putText(frame, f"Altitude: {last_altitude_value}", (altitude_rect_start_x, altitude_rect_start_y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
                 cv2.putText(frame, f"Time: {time_text} seconds", (time_rect_start_x, time_rect_start_y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)

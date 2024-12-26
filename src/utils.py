@@ -21,12 +21,13 @@ def extract_text(image_region):
     return pytesseract.image_to_string(image_region, config=custom_config)
 
 def time_to_ms(time_text):
-    """Convierte el tiempo en formato MM:SS a milisegundos."""
+    """Convierte el tiempo en formato HH:MM:SS a milisegundos."""
     parts = time_text.split(':')
-    if len(parts) == 2 and all(part.isdigit() for part in parts):
-        minutes, seconds = map(int, parts)
-        totalsecs = minutes * 60 + seconds
-        return totalsecs * 1000
+    if len(parts) == 3 and all(part.isdigit() for part in parts):
+        hours, minutes, seconds = map(int, parts)
+        total_secs = hours * 3600 + minutes * 60 + seconds
+        print(total_secs*1000)
+        return total_secs * 1000
     return 0
 
 def time_to_seconds(time_text):
