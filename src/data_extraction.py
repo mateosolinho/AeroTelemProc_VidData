@@ -100,11 +100,11 @@ def read_speed_and_altitude_from_video(video_path, profile, initTime, finishTime
             if not ret:
                 break
             
-            # Asegúrate de que las coordenadas están dentro de los límites del cuadro
+            # Me aseguro de que las coordenadas de la región de interés no excedan el tamaño del cuadro
             height, width, _ = frame.shape
             if (rect_start_y + rect_height) > height or (rect_start_x + rect_width) > width:
                 print("La región de velocidad excede el tamaño del cuadro.")
-                continue  # O realiza algún otro manejo de errores aquí
+                continue  # O realizo algún otro manejo de errores aquí
 
             # Extrae las regiones donde se encuentran SPEED, ALTITUDE, y el contador de tiempo
             speed_region = frame[rect_start_y:rect_start_y + rect_height, rect_start_x:rect_start_x + rect_width]

@@ -3,7 +3,7 @@ import numpy as np
 from collections import deque
 
 def detectar_angulo_nave(frame, angulos_buffer):
-    # Definir las coordenadas de la ROI (ajústalas según tus necesidades)
+    # Definir las coordenadas de la ROI para la detección de ángulos
     x1, y1, x2, y2 = 1170, 900, 1320, 1080  # Ejemplo de coordenadas para una ROI específica de Starship
     roi = frame[y1:y2, x1:x2]
 

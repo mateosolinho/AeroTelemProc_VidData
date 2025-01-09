@@ -1,3 +1,5 @@
+# Credits: This code is based on the work of the authors named @LaunchLabsLive, i have permission to use and modify the code.
+
 import cv2
 import logging
 
