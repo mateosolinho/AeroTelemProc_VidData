@@ -2,7 +2,7 @@
 
 Welcome to the exciting world of extracting telemetry data from rocket launches. This project is a tool designed for aviation enthusiasts, space engineering fans, and programmers, aiming to capture and analyze key data from rocket launches through videos.
 
-![Image1](C:/Users/mateo/Desktop/AeroTelemProc_VidData/assets/3.jpg)
+![Image1](https://github.com/mateosolinho/AeroTelemProc_VidData/blob/main/assets/3.jpg)
 
 ## 📊 What Is This?
 
@@ -15,7 +15,7 @@ Imagine being able to extract speed data and other metrics directly from a launc
 3. **Data Extraction**: It uses Tesseract to read the information and displays it in real-time as the video plays.
 4. **Saved Data**: All collected telemetry data is saved in a Google Sheet and a database.
 
-![Image2](C:/Users/mateo/Desktop/AeroTelemProc_VidData/assets/2.jpg)
+![Image2](https://github.com/mateosolinho/AeroTelemProc_VidData/blob/main/assets/1.jpg)
 
 ## 🌟 Key Features
 
