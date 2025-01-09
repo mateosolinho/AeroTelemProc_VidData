@@ -17,6 +17,8 @@ Imagine being able to extract speed data and other metrics directly from a launc
 
 ![Image2](https://github.com/mateosolinho/AeroTelemProc_VidData/blob/main/assets/1.jpg)
 
+> Ask me for access to the data files -> mateosolino1@gmail.com
+
 ## 🌟 Key Features
 
 - **Real-Time Extraction**: Captures and displays speed data instantly.
