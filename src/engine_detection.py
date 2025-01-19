@@ -1,8 +1,9 @@
 import cv2
 import numpy as np
 
-# Función para verificar los círculos detectados y contar los motores encendidos
-def verificar_circulos(circles, roi, motores_encendidos):
+def check_circles(circles, roi, engines_on):
+    """Check the detected circles and count the engines that are on."""
+    
     if circles is not None:
         circles = np.round(circles[0, :]).astype("int")
 
@@ -13,41 +14,42 @@ def verificar_circulos(circles, roi, motores_encendidos):
             motor_color = roi[y, x]
                 
             if np.mean(motor_color) > 200:
-                motores_encendidos += 1
+                engines_on += 1
                 
             cv2.circle(roi, (x, y), r, (0, 255, 0), 2)
             
-    return motores_encendidos
+    return engines_on
 
-# Función para analizar los motores en el frame dado
-def analizar_motores(frame):
-    resultados = {
+def analyze_engines(frame):
+    """Analyze the engines in the given frame."""
+    
+    results = {
         "starship": 0,
         "booster": 0
     }
     
-    # Definir la región de interés para Satrship
+    # Define the region of interest for Starship
     x1, y1, x2, y2 = 1700, 900, 1920, 1080
     roi = frame[y1:y2, x1:x2]
     
-    # Convertir la ROI a escala de grises y aplicar desenfoque para una mejor detección
+    # Convert ROI to grayscale and apply blur for better detection
     gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
     blurred = cv2.medianBlur(gray, 5)
     
-    # Detectar círculos en la ROI 
+    # Detect circles in ROI
     circles = cv2.HoughCircles(blurred, cv2.HOUGH_GRADIENT, dp=1.2, minDist=5, param1=50, param2=30, minRadius=10, maxRadius=30)
-    resultados["starship"] = verificar_circulos(circles, roi, resultados["starship"])
+    results["starship"] = check_circles(circles, roi, results["starship"])
     
-    # Definir la región de interés para el Booster
+    # Define the region of interest for the Booster
     x1, y1, x2, y2 = 20, 900, 180, 1080
     roi = frame[y1:y2, x1:x2]
     
-    # De nuevo convertir la ROI a escala de grises y aplicar desenfoque
+    # Again convert the ROI to grayscale and apply blur
     gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
     blurred = cv2.medianBlur(gray, 5)
     
-    # Detectar círculos en la ROI
+    # Detect circles in ROI
     circles = cv2.HoughCircles(blurred, cv2.HOUGH_GRADIENT, dp=1, minDist=3, param2=20, minRadius=3, maxRadius=10)
-    resultados["booster"] = verificar_circulos(circles, roi, resultados["booster"])
+    results["booster"] = check_circles(circles, roi, results["booster"])
     
-    return resultados
+    return results
